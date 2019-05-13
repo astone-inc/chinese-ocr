@@ -1,5 +1,3 @@
-# 坑爹的楼主没改pytorch的代码，别的代码也有问题，很多都不符合规范。还有很多字符问题。.gitignore 也没加还上传些垃圾文件，能不能有点工程素养。
-
 # 本文基于tensorflow、keras/pytorch实现对自然场景的文字检测及端到端的OCR中文文字识别
 
 # 实现功能
@@ -47,15 +45,15 @@ cd train & sh train-pytorch.sh
 # 识别结果展示
 ## 文字检测及OCR识别结果
 <div>
-<img width="300" height="300" src="https://github.com/chineseocr/chinses-ocr/blob/master/img/tmp.jpg"/>
-<img width="300" height="300" src="https://github.com/chineseocr/chinses-ocr/blob/master/img/tmp.png"/>
+<img width="300" height="300" src="https://github.com/astone-inc/chinese-ocr/blob/develop/img/tmp.jpg"/>
+<img width="300" height="300" src="https://github.com/astone-inc/chinese-ocr/blob/develop/img/tmp.png"/>
 </div>
 
 ### 倾斜文字 
 
 <div>
-<img width="300" height="300" src="https://github.com/chineseocr/chinses-ocr/blob/master/img/tmp1.jpg"/>
-<img width="300" height="300" src="https://github.com/chineseocr/chinses-ocr/blob/master/img/tmp1.png"/>
+<img width="300" height="300" src="https://github.com/astone-inc/chinese-ocr/blob/develop/img/tmp1.jpg"/>
+<img width="300" height="300" src="https://github.com/astone-inc/chinese-ocr/blob/develop/img/tmp1.png"/>
 </div>
 
 ## 参考
