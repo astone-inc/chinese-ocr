@@ -92,7 +92,7 @@ def model(img,adjust=False,detectAngle=False):
         
     text_recs,tmp,img = text_detect(img)
     text_recs = sort_box(text_recs)
-    result = crnnRec(img,text_recs,model,adjust=adjust)
+    result = crnnRec(img,text_recs,adjust=adjust)
     return result,tmp,angle
 
 def sort_box(box):
