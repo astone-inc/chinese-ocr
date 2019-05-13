@@ -26,7 +26,7 @@ class BidirectionalLSTM(nn.Module):
 
 class CRNN(nn.Module):
 
-    def __init__(self, imgH, nc, nclass, nh, ngpu, n_rnn=2, leakyRelu=False):
+    def __init__(self, imgH, nc, nclass, nh, ngpu=0, n_rnn=2, leakyRelu=False):
         super(CRNN, self).__init__()
         self.ngpu = ngpu
         assert imgH % 16 == 0, 'imgH has to be a multiple of 16'
