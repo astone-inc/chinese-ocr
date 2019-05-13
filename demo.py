@@ -10,10 +10,10 @@ if __name__ =='__main__':
         im = Image.open(path)
         img = np.array(im.convert('RGB'))
         t = time.time()
-        result, img, angle = model.model(img, detectAngle=True)
+        result, img, angle = model.model(img, detectAngle=False)
         print("---------------------------------------")
         print("It takes time:{}s".format(time.time()-t))
-        print("File Path: ".format(path),
+        print("File Path: {}".format(path),
               "Image text angle is: {} Degree".format(angle),
               "Result:\n")
 
