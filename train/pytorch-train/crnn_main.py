@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--trainroot', help='path to dataset',default='../data/lmdb/train')
 parser.add_argument('--valroot', help='path to dataset',default='../data/lmdb/val')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
-parser.add_argument('--batchSize', type=int, default=128, help='input batch size')
+parser.add_argument('--batchSize', type=int, default=1, help='input batch size')
 parser.add_argument('--imgH', type=int, default=32, help='the height of the input image to network')
 parser.add_argument('--imgW', type=int, default=256, help='the width of the input image to network')
 parser.add_argument('--nh', type=int, default=256, help='size of the lstm hidden state')
@@ -32,8 +32,8 @@ parser.add_argument('--lr', type=float, default=0.005, help='learning rate for C
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
 parser.add_argument('--cuda', action='store_true', help='enables cuda')
 parser.add_argument('--ngpu', type=int, default=1, help='number of GPUs to use')
-parser.add_argument('--crnn', help="path to crnn (to continue training)",default='../pretrain-models/netCRNN.pth')
-#parser.add_argument('--crnn', help="path to crnn (to continue training)",default='')
+#parser.add_argument('--crnn', help="path to crnn (to continue training)",default='../pretrain-models/netCRNN.pth')
+parser.add_argument('--crnn', help="path to crnn (to continue training)",default='')
 parser.add_argument('--alphabet', default=alphabet)
 parser.add_argument('--experiment', help='Where to store samples and models',default='./save_model')
 parser.add_argument('--displayInterval', type=int, default=50, help='Interval to be displayed')
@@ -70,7 +70,8 @@ else:
     sampler = None
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=opt.batchSize,
-    shuffle=True, sampler=sampler,
+    #shuffle=True, sampler=sampler,
+    sampler=sampler,
     num_workers=int(opt.workers),
     collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
 test_dataset = dataset.lmdbDataset(
@@ -95,7 +96,21 @@ def weights_init(m):
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
 
+
+if torch.cuda.is_available() and opt.cuda:
+    device = torch.device('cuda')
+    print('Using cuda...')
+else:
+    device = torch.device('cpu')
+    print('Using cpu...')
+
 crnn = crnn.CRNN(opt.imgH, nc, nclass, nh, ngpu)
+
+if opt.ngpu > 1:
+    crnn = torch.nn.DataParallel(crnn, range(opt.ngpu))
+
+crnn = crnn.to(device)
+
 crnn.apply(weights_init)
 if opt.crnn != '':
     print('loading pretrained model from %s' % opt.crnn)
@@ -106,14 +121,8 @@ image = torch.FloatTensor(opt.batchSize, 3, opt.imgH, opt.imgH)
 text = torch.IntTensor(opt.batchSize * 5)
 length = torch.IntTensor(opt.batchSize)
 
-if opt.cuda:
-    crnn.cuda()
-    image = image.cuda()
-    criterion = criterion.cuda()
-
-image = Variable(image)
-text = Variable(text)
-length = Variable(length)
+image = image.to(device)
+criterion = criterion.to(device)
 
 # loss averager
 loss_avg = utils.averager()
@@ -150,8 +159,9 @@ def val(net, dataset, criterion, max_iter=2):
         cpu_images, cpu_texts = data
         batch_size = cpu_images.size(0)
         utils.loadData(image, cpu_images)
+        
         if ifUnicode:
-             cpu_texts = [ clean_txt(tx.decode('utf-8'))  for tx in cpu_texts]
+             cpu_texts = [ clean_txt(eval(tx).decode())  for tx in cpu_texts]
         t, l = converter.encode(cpu_texts)
         utils.loadData(text, t)
         utils.loadData(length, l)
@@ -162,7 +172,7 @@ def val(net, dataset, criterion, max_iter=2):
         loss_avg.add(cost)
 
         _, preds = preds.max(2)
-        preds = preds.squeeze(2)
+        #preds = preds.squeeze(2)
         preds = preds.transpose(1, 0).contiguous().view(-1)
         sim_preds = converter.decode(preds.data, preds_size.data, raw=False)
         for pred, target in zip(sim_preds, cpu_texts):
@@ -193,8 +203,9 @@ def clean_txt(txt):
 def trainBatch(net, criterion, optimizer,flage=False):
     data = train_iter.next()
     cpu_images, cpu_texts = data##decode utf-8 to unicode
+    #import ipdb;ipdb.set_trace()
     if ifUnicode:
-        cpu_texts = [ clean_txt(tx.decode('utf-8'))  for tx in cpu_texts]
+        cpu_texts = [ clean_txt(eval(tx).decode())  for tx in cpu_texts]
         
     batch_size = cpu_images.size(0)
     utils.loadData(image, cpu_images)
@@ -227,10 +238,7 @@ def delete(path):
     paths = glob.glob(path+'/*.pth')
     for p in paths:
         os.remove(p)
-    
-    
-    
-    
+
 numLoss = 0##判断训练参数是否下降    
     
 for epoch in range(opt.niter):
